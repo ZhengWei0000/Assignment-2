@@ -13,6 +13,7 @@ import blocks.BlockShapes.ShapeSet;
 import blocks.BlockShapes.SpriteState;
 import blocks.BlockShapes.Sprite;
 
+
 // class should work in a basic way as provided if all the todo's are implemented in the other classes
 // though you need to provide or complete the implementations for the methods in todos below
 
@@ -23,9 +24,11 @@ public class GameView extends JComponent {
     int margin = 5;
     int shapeRegionHeight;
     int cellSize = 40;
+    int smallCellSize = 40;
     int paletteCellSize = 20;
     int shrinkSize = 30;
     Piece ghostShape = null;
+    int pieceSpacing = 15;
     List<Shape> poppableRegions = null;
 
     public GameView(ModelInterface model, Palette palette) {
@@ -39,18 +42,68 @@ public class GameView extends JComponent {
         // then get the list of current shapes from the palette
         g.setColor(Color.LIGHT_GRAY);
         g.fillRect(margin, margin + ModelInterface.height * cellSize, ModelInterface.width * cellSize, shapeRegionHeight);
+
         for (Sprite sprite : palette.getSprites()) {
             // todo: paint the sprite in the palette
+            if (sprite.state == SpriteState.IN_PALETTE) {
+                g.setColor(Color.BLUE);
+                for (Cell cell : sprite.shape) {
+                    int x = sprite.px + cell.x() * smallCellSize;
+                    int y = sprite.py + cell.y() * smallCellSize;
+                    g.setColor(Color.BLUE);
+                    g.fillRect(x, y, smallCellSize, smallCellSize);
+
+                    g.setColor(Color.BLACK);
+                    g.drawRect(x, y, smallCellSize, smallCellSize);
+
+                }
+            }
         }
+
     }
 
     private void paintPoppableRegions(Graphics g, int cellSize) {
         // todo: implement
+        if (poppableRegions == null) {
+            return;
+        }
+
+        g.setColor(Color.pink);
+        for (Shape region : poppableRegions) {
+            for (Cell cell : region) {
+                int x = margin + cell.x() * cellSize;
+                int y = margin + cell.y() * cellSize;
+                g.fill3DRect(x, y, cellSize, cellSize,true);
+            }
+        }
+
 
     }
 
     private void paintGhostShape(Graphics g, int cellSize) {
         // todo: implement
+        int spacing = cellSize / 8;
+        if (ghostShape != null) {
+            g.setColor(Color.CYAN);
+            for (Cell cell : ghostShape.cells()) {
+                int x = margin + cell.x() * cellSize;
+                int y = margin + cell.y() * cellSize;
+                g.fill3DRect(x, y, cellSize, cellSize, true);
+            }
+        }
+
+        // 绘制拖动中的拼块
+        for (Sprite sprite : palette.getSprites()) {
+            if (sprite.state == SpriteState.IN_PLAY) {
+                g.setColor(Color.BLUE);
+                for (Cell cell : sprite.shape) {
+                    int x = sprite.px + cell.x() * (smallCellSize+spacing+ + pieceSpacing);
+                    int y = sprite.py + cell.y() * (smallCellSize+spacing+ + pieceSpacing);
+                    g.fill3DRect(x, y, smallCellSize, smallCellSize, true);
+                }
+            }
+        }
+
 
         System.out.println("painting ghost shape: " + ghostShape);
     }
@@ -66,8 +119,14 @@ public class GameView extends JComponent {
         for (int x = 0; x < ModelInterface.width; x++) {
             for (int y = 0; y < ModelInterface.height; y++) {
                 // todo: paint the cells that are occupied in a different colour
-                g.setColor(Color.WHITE);
-                g.fill3DRect(x0 + x * cellSize, y0 + y * cellSize, cellSize, cellSize, true);
+                int cellX = x0 + x * cellSize;
+                int cellY = y0 + y * cellSize;
+                if (occupiedCells.contains(new Cell(x, y))) {
+                    g.setColor(Color.GREEN);
+                } else {
+                    g.setColor(Color.WHITE);
+                }
+                g.fill3DRect(cellX, cellY, cellSize, cellSize, true);
             }
         }
     }
@@ -87,18 +146,21 @@ public class GameView extends JComponent {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
+
         paintGrid(g);
         paintMiniGrids((Graphics2D) g); // cosmetic
         paintGhostShape(g, cellSize);
         paintPoppableRegions(g, cellSize);
         paintShapePalette(g, cellSize);
+
+
     }
 
     @Override
     public Dimension getPreferredSize() {
         return new Dimension(
-                ModelInterface.width * cellSize + 2 * margin,
-                ModelInterface.height * cellSize + 2 * margin + shapeRegionHeight
+                ModelInterface.width * cellSize + 6 * margin,
+                ModelInterface.height * cellSize + 6 * margin + shapeRegionHeight
         );
     }
 

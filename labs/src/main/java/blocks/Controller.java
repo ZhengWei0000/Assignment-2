@@ -48,12 +48,53 @@ public class Controller extends MouseAdapter {
 
     public void mouseDragged(MouseEvent e) {
         // todo: implement
+        if (selectedSprite == null) {
+            return;
+        }
+        selectedSprite.px = e.getX();
+        selectedSprite.py = e.getY();
+
+        ghostShape = selectedSprite.snapToGrid(view.margin, view.cellSize);
+        if (model.canPlace(ghostShape)) {
+            view.ghostShape = ghostShape;
+            view.poppableRegions = model.getPoppableRegions(ghostShape);
+        } else {
+            view.ghostShape = null;
+            view.poppableRegions = null;
+        }
+        view.repaint();
     }
 
     public void mouseReleased(MouseEvent e) {
         // todo: implement
 
         // update the title with the score and whether the game is over
+        if (selectedSprite == null) {
+            return;
+        }
+
+        if (ghostShape != null && model.canPlace(ghostShape)) {
+            model.place(ghostShape);
+            selectedSprite.state = SpriteState.PLACED;
+
+            palette.getSprites().remove(selectedSprite);
+
+            // Reset Ghost
+            view.ghostShape = null;
+            view.poppableRegions = null;
+
+            palette.replenish();
+        } else {
+            selectedSprite.state = SpriteState.IN_PALETTE;
+        }
+
+        selectedSprite = null;
+        ghostShape = null;
+
+        if (model.isGameOver(palette.getShapesToPlace())) {
+            gameOver = true;
+        }
+
         frame.setTitle(getTitle());
         view.repaint();
     }

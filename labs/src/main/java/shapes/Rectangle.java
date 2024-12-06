@@ -14,12 +14,12 @@ public class Rectangle extends MovableShape {
 
     public double area() {
         // todo: implement
-        return 0.0;
+        return width * height;
     }
 
     public double perimeter() {
         // todo: implement
-        return 0;
+        return 2 * (width + height);
     }
 }
 
